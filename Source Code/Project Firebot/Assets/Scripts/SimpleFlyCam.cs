@@ -17,7 +17,7 @@ public class SimpleFlyCam : MonoBehaviour
     }
 
     // Update is called once per frame
-    private void Update()
+    private void FixedUpdate()
     {
         gameObject.transform.Rotate(-Input.GetAxis("Mouse Y"), 0, 0);
         gameObject.transform.Rotate(0, Input.GetAxis("Mouse X"), 0);
