@@ -168,7 +168,6 @@ public class PointCloudManager : MonoBehaviour {
 			myColors[i] = colors[id*limitPoints + i];
 		}
 
-
 		mesh.vertices = myPoints;
 		mesh.colors = myColors;
 		mesh.SetIndices(indecies, MeshTopology.Points,0);

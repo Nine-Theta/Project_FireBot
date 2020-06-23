@@ -3,15 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
+[RequireComponent(typeof(PointCloudBuilder))]
 public class PointCloudManagerRedux : MonoBehaviour
 {
-    private enum loadMode {Stored, Streaming};
-    [SerializeField] private loadMode mode = loadMode.Stored;
-
     /*File*/    [Header("File")]
-    public string filePath; // "\PointCloud\xyzrgb_manuscript" <- test pointcloud
+    public string filePath = "/PointCloud/xyzrgb_manuscript"; // "\PointCloud\xyzrgb_manuscript" <- test pointcloud
     private string filename;
-    [SerializeField] private Material vertexMaterial;
 
     //GUI
     private float progress = 0;
@@ -25,16 +22,14 @@ public class PointCloudManagerRedux : MonoBehaviour
     public bool invertYZ = false;
     public bool forceReload = false;
 
-    [SerializeField] private int totalPoints;
-    [SerializeField] private int pointGroups;
-    [SerializeField] private int groupPointLimit = 65000;
-
     private Vector3[] points;
     private Color[] colors;
     private Vector3 minValue;
 
     private Color defaultColor = Color.green;
     private const float colDiv = 0.00392156862745098f; // 1/255
+
+    private PointCloudBuilder builder;
 
     private void Start()
     {
@@ -43,12 +38,9 @@ public class PointCloudManagerRedux : MonoBehaviour
 
         filename = Path.GetFileName(filePath);
 
+        builder = GetComponent<PointCloudBuilder>();
+
         LoadScene();
-    }
-
-    public void LoadPointGroup(int pPointCount, Vector3[] pPoints, Vector3[] pColors)
-    {
-
     }
 
     private void LoadScene()
@@ -75,12 +67,12 @@ public class PointCloudManagerRedux : MonoBehaviour
     {
         if (File.Exists(Application.dataPath + filePath + ".off"))
             StartCoroutine("LoadOFF", filePath + ".off");
-        else if (File.Exists(Application.dataPath + filePath + ".pts"))
+       /*else if (File.Exists(Application.dataPath + filePath + ".pts"))
             // load pts
             StartCoroutine("loadPTS", filePath + ".pts");
         else if (File.Exists(Application.dataPath + filePath + ".xyz"))
             // load xyz
-            StartCoroutine("loadXYZ", filePath + ".xyz");
+            StartCoroutine("loadXYZ", filePath + ".xyz");*/
         else
             Debug.LogWarning("File '" +filePath+ "' could not be found");
     }
@@ -101,10 +93,9 @@ public class PointCloudManagerRedux : MonoBehaviour
         reader.ReadLine(); // Object File Format
         string[] buffer = reader.ReadLine().Split(); //  number of points, number of faces, number of edges
 
-        totalPoints = int.Parse(buffer[0]);
+        int totalPoints = int.Parse(buffer[0]);
         points = new Vector3[totalPoints];
         colors = new Color[totalPoints];
-        minValue = new Vector3();
 
         for (int i = 0; i<totalPoints; i++)
         {
@@ -122,31 +113,17 @@ public class PointCloudManagerRedux : MonoBehaviour
 
             //GUI
             progress = (float)i / (totalPoints - 1);
-            if(i%Mathf.FloorToInt(totalPoints/20) == 0)
+            if(i%(totalPoints*0.05f) == 0)
             {
                 guiText = i.ToString() +" out of " + totalPoints.ToString() + " loaded";
                 yield return null;
             }
         }
 
-        //Instantiate Point Groups
-        pointGroups = Mathf.CeilToInt((float)totalPoints / groupPointLimit);
-
-        pointCloud = new GameObject(filename);
-
-        for(int i = 0; i < pointGroups-1; i++)
-        {
-            InstantiateMesh(i, groupPointLimit);
-            if(i%10 == 0)
-            {
-                guiText = i.ToString() + "out of " + pointGroups.ToString() + " PointGroups loaded";
-                yield return null;
-            }
-        }
-        InstantiateMesh(pointGroups - 1, totalPoints - (pointGroups - 1) * groupPointLimit);
+        builder.LoadPointGroup(points, colors, filename);
 
         //Store PointCloud
-        UnityEditor.PrefabUtility.CreatePrefab("Assets/Resources/PointCloudMeshes/" + filename + ".prefab", pointCloud);
+        //UnityEditor.PrefabUtility.CreatePrefab("Assets/Resources/PointCloudMeshes/" + filename + ".prefab", pointCloud);
 
         loaded = true;
     }
@@ -159,7 +136,7 @@ public class PointCloudManagerRedux : MonoBehaviour
         StreamReader sr = new StreamReader(Application.dataPath + dPath);
         string[] buffer = sr.ReadLine().Split(); // nPoints
 
-        totalPoints = int.Parse(buffer[0]);
+        int totalPoints = int.Parse(buffer[0]);
         points = new Vector3[totalPoints];
         colors = new Color[totalPoints];
         minValue = new Vector3();
@@ -183,7 +160,7 @@ public class PointCloudManagerRedux : MonoBehaviour
 
             // GUI
             progress = i * 1.0f / (totalPoints- 1) * 1.0f;
-            if (i % Mathf.FloorToInt(totalPoints/ 20) == 0)
+            if (i % Mathf.FloorToInt(totalPoints * 0.05f) == 0)
             {
                 guiText = i.ToString() + " out of " + totalPoints.ToString() + " loaded";
                 yield return null;
@@ -192,23 +169,10 @@ public class PointCloudManagerRedux : MonoBehaviour
 
 
         // Instantiate Point Groups
-        pointGroups = Mathf.CeilToInt(totalPoints* 1.0f / groupPointLimit * 1.0f);
-
-        pointCloud = new GameObject(filename);
-
-        for (int i = 0; i < pointGroups - 1; i++)
-        {
-            InstantiateMesh(i, groupPointLimit);
-            if (i % 10 == 0)
-            {
-                guiText = i.ToString() + " out of " + pointGroups.ToString() + " PointGroups loaded";
-                yield return null;
-            }
-        }
-        InstantiateMesh(pointGroups - 1, totalPoints- (pointGroups - 1) * groupPointLimit);
+        builder.LoadPointGroup(points, colors, filename);
 
         //Store PointCloud
-        UnityEditor.PrefabUtility.CreatePrefab("Assets/Resources/PointCloudMeshes/" + filename + ".prefab", pointCloud);
+        //UnityEditor.PrefabUtility.CreatePrefab("Assets/Resources/PointCloudMeshes/" + filename + ".prefab", pointCloud);
 
         loaded = true;
     }
@@ -220,7 +184,7 @@ public class PointCloudManagerRedux : MonoBehaviour
         StreamReader sr = new StreamReader(Application.dataPath + dPath);
         string[] buffer = new string[8];
 
-        totalPoints= 56000000;
+        int totalPoints= 56000000;
         points = new Vector3[totalPoints];
         colors = new Color[totalPoints];
         minValue = new Vector3();
@@ -251,103 +215,14 @@ public class PointCloudManagerRedux : MonoBehaviour
             }
         }
 
-
-        // Instantiate Point Groups
-        pointGroups = Mathf.CeilToInt(totalPoints* 1.0f / groupPointLimit * 1.0f);
-
-        pointCloud = new GameObject(filename);
-
-        for (int i = 0; i < pointGroups - 1; i++)
-        {
-            InstantiateMesh(i, groupPointLimit);
-            if (i % 10 == 0)
-            {
-                guiText = i.ToString() + " out of " + pointGroups.ToString() + " PointGroups loaded";
-                yield return null;
-            }
-        }
-        InstantiateMesh(pointGroups - 1, totalPoints- (pointGroups - 1) * groupPointLimit);
+        builder.LoadPointGroup(points, colors, filename);
 
         //Store PointCloud
-        UnityEditor.PrefabUtility.CreatePrefab("Assets/Resources/PointCloudMeshes/" + filename + ".prefab", pointCloud);
+        //UnityEditor.PrefabUtility.CreatePrefab("Assets/Resources/PointCloudMeshes/" + filename + ".prefab", pointCloud);
 
         loaded = true;
     }
-
-    private IEnumerator LoadDirectly(int pPointCount, Vector3[] pPoints, Vector3[] pColors)
-    {
-        GameObject pointGroup = new GameObject("Points("+pPointCount+")");
-        pointGroup.AddComponent<MeshFilter>();
-        pointGroup.AddComponent<MeshRenderer>();
-        pointGroup.GetComponent<MeshRenderer>().material = vertexMaterial;
-
-        //pointGroup.GetComponent<MeshFilter>().mesh = CreateStandaloneMesh(pPointCount, pPoints, pColors);
-        pointGroup.transform.parent = pointCloud.transform;
-
-        return null;
-    }
-
-    private void InstantiateMesh(int pMeshIndex, int pPointCount)
-    {
-        GameObject pointGroup = new GameObject(filename + pMeshIndex);
-        pointGroup.AddComponent<MeshFilter>();
-        pointGroup.AddComponent<MeshRenderer>();
-        pointGroup.GetComponent<MeshRenderer>().material = vertexMaterial;
-
-        pointGroup.GetComponent<MeshFilter>().mesh = CreateMesh(pMeshIndex, pPointCount);
-        pointGroup.transform.parent = pointCloud.transform;
-
-        //Store Mesh
-        UnityEditor.AssetDatabase.CreateAsset(pointGroup.GetComponent<MeshFilter>().mesh, "Assets/Resources/PointCloudMeshes/" + filename + @"/" + filename + pMeshIndex + ".asset");
-        UnityEditor.AssetDatabase.SaveAssets();
-        UnityEditor.AssetDatabase.Refresh();
-    }
-
-    private Mesh CreateMesh(int pID, int pPointCount)
-    {
-        Mesh mesh = new Mesh();
-
-        Vector3[] meshPoints = new Vector3[pPointCount];
-        int[] indicies = new int[pPointCount];
-        Color[] meshColors = new Color[pPointCount];
-
-        for(int i = 0; i<pPointCount; i++)
-        {
-            meshPoints[i] = points[pID * groupPointLimit + i] - minValue;
-            indicies[i] = i;
-            meshColors[i] = colors[pID * groupPointLimit + i];
-        }
-
-        mesh.vertices = meshPoints;
-        mesh.colors = meshColors;
-        mesh.SetIndices(indicies, MeshTopology.Points, 0);
-        mesh.uv = new Vector2[pPointCount];
-        mesh.normals = new Vector3[pPointCount];
-
-        return mesh;
-    }
-
-    private Mesh CreateStandaloneMesh(int pPointCount, Vector3[] pPoints, Color[] pColors)
-    {
-        Mesh mesh = new Mesh();
-
-        Vector3[] meshPoints = new Vector3[pPointCount];
-        int[] indicies = new int[pPointCount];
-
-        for (int i = 0; i < pPointCount; i++)
-        {
-            indicies[i] = i;
-        }
-
-        mesh.vertices = pPoints;
-        mesh.colors = pColors;
-        mesh.SetIndices(indicies, MeshTopology.Points, 0);
-        mesh.uv = new Vector2[pPointCount];
-        mesh.normals = new Vector3[pPointCount];
-
-        return mesh;
-    }
-
+    
     private void CalculateMin(Vector3 pPoint)
     {
         if (minValue.magnitude == 0)
