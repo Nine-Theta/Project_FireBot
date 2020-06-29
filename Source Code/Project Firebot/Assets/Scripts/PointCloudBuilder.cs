@@ -9,17 +9,13 @@ public class PointCloudBuilder : MonoBehaviour
 
     [SerializeField] private Material vertexMaterial;
 
-    [SerializeField] private int meshPointLimit = 65000;
+    [SerializeField] private int meshPointLimit = 65535;
 
     //GUI
     private float progress = 0;
     private string guiText = "";
     private bool loaded = false;
-
-    /*PointCloud*/
-    public float scale = 1;
-    public bool invertYZ = false;
-
+    
     [SerializeField] private Color defaultColor = Color.green;
     private const float colDiv = 0.00392156862745098f; // 1/255
 
@@ -51,37 +47,40 @@ public class PointCloudBuilder : MonoBehaviour
         set { vertexMaterial = value; }
     }
 
-    public void LoadPointGroup(Vector3[] pPoints, string pName = "pointCloud")
+    public void LoadPoints(Vector3[] pPoints, GameObject pParent = null)
     {
-        LoadPointGroup(pPoints, defaultColor, pName);
+        if (pParent == null) pParent = gameObject;
+        LoadPoints(pPoints, defaultColor, pParent);
     }
     
-    public void LoadPointGroup(Vector3[] pPoints, Color pColor, string pName = "pointCloud")
+    public void LoadPoints(Vector3[] pPoints, Color pColor, GameObject pParent = null)
     {
-        StartCoroutine(LoadDirectly(pPoints, pColor, pName));
+        if (pParent == null) pParent = gameObject;
+        StartCoroutine(Load(pPoints, pColor, pParent));
     }
 
-    public void LoadPointGroup(Vector3[] pPoints, Vector3[] pColors, string pName = "pointCloud")
+    public void LoadPoints(Vector3[] pPoints, Vector3[] pColors, GameObject pParent = null)
     {
-        StartCoroutine(LoadDirectly(pPoints, pColors, pName));
+        if (pParent == null) pParent = gameObject;
+        StartCoroutine(Load(pPoints, pColors, pParent));
     }
 
-    public void LoadPointGroup(Vector3[] pPoints, Vector4[] pColors, string pName = "pointCloud")
+    public void LoadPoints(Vector3[] pPoints, Vector4[] pColors, GameObject pParent = null)
     {
-        StartCoroutine(LoadDirectly(pPoints, pColors, pName));
+        if (pParent == null) pParent = gameObject;
+        StartCoroutine(Load(pPoints, pColors, pParent));
     }
 
-    public void LoadPointGroup(Vector3[] pPoints, Color[] pColors, string pName = "pointCloud")
+    public void LoadPoints(Vector3[] pPoints, Color[] pColors, GameObject pParent = null)
     {
-        StartCoroutine(LoadDirectly(pPoints, pColors, pName));
+        if (pParent == null) pParent = gameObject;
+        StartCoroutine(Load(pPoints, pColors, pParent));
     }
 
     #region IEnumerators
 
-    private IEnumerator LoadDirectly(Vector3[] pPoints, Color pColor, string pName)
+    private IEnumerator Load(Vector3[] pPoints, Color pColor, GameObject pParent)
     {
-        GameObject pointCloud = new GameObject(pName);
-
         int pointCount = pPoints.Length;
         int groupCount = pointCount / meshPointLimit;       //zero indexed
 
@@ -99,7 +98,7 @@ public class PointCloudBuilder : MonoBehaviour
                 indicies[j] = j;
                 groupColors[j] = pColor;
                     }
-            InstantiateMesh(groupPoints, groupColors, indicies, pointCloud, i);
+            InstantiateMesh(groupPoints, groupColors, indicies, pParent, i);
 
             guiText = i.ToString() + " out of " + groupCount.ToString() + " PointGroups loaded";
             yield return null;
@@ -116,13 +115,11 @@ public class PointCloudBuilder : MonoBehaviour
             groupColors[j] = pColor;
         }
 
-        InstantiateMesh(groupPoints, groupColors, indicies, pointCloud, groupCount);
+        InstantiateMesh(groupPoints, groupColors, indicies, pParent, groupCount);
     }
 
-    private IEnumerator LoadDirectly(Vector3[] pPoints, Vector3[] pColors, string pName)
+    private IEnumerator Load(Vector3[] pPoints, Vector3[] pColors, GameObject pParent)
     {
-        GameObject pointCloud = new GameObject(pName);
-
         int pointCount = pPoints.Length;
         int groupCount = pointCount / meshPointLimit;       //zero indexed
 
@@ -140,7 +137,7 @@ public class PointCloudBuilder : MonoBehaviour
                 indicies[j] = j;
                 groupColors[j] = new Color(pColors[i * meshPointLimit + j].x * colDiv, pColors[i * meshPointLimit + j].y * colDiv, pColors[i * meshPointLimit + j].z * colDiv);
             }
-            InstantiateMesh(groupPoints, groupColors, indicies, pointCloud, i);
+            InstantiateMesh(groupPoints, groupColors, indicies, pParent, i);
 
             guiText = i.ToString() + " out of " + groupCount.ToString() + " PointGroups loaded";
             yield return null;
@@ -157,13 +154,11 @@ public class PointCloudBuilder : MonoBehaviour
             groupColors[j] = groupColors[j] = new Color(pColors[groupCount * meshPointLimit + j].x * colDiv, pColors[groupCount * meshPointLimit + j].y * colDiv, pColors[groupCount * meshPointLimit + j].z * colDiv);
         }
 
-        InstantiateMesh(groupPoints, groupColors, indicies, pointCloud, groupCount);
+        InstantiateMesh(groupPoints, groupColors, indicies, pParent, groupCount);
     }
 
-    private IEnumerator LoadDirectly(Vector3[] pPoints, Vector4[] pColors, string pName)
+    private IEnumerator Load(Vector3[] pPoints, Vector4[] pColors, GameObject pParent)
     {
-        GameObject pointCloud = new GameObject(pName);
-
         int pointCount = pPoints.Length;
         int groupCount = pointCount / meshPointLimit;       //zero indexed
 
@@ -181,7 +176,7 @@ public class PointCloudBuilder : MonoBehaviour
                 indicies[j] = j;
                 groupColors[j] = pColors[i * meshPointLimit + j];
             }
-            InstantiateMesh(groupPoints, groupColors, indicies, pointCloud, i);
+            InstantiateMesh(groupPoints, groupColors, indicies, pParent, i);
 
             guiText = i.ToString() + " out of " + groupCount.ToString() + " PointGroups loaded";
             yield return null;
@@ -198,13 +193,11 @@ public class PointCloudBuilder : MonoBehaviour
             groupColors[j] = pColors[groupCount * meshPointLimit + j];
         }
 
-        InstantiateMesh(groupPoints, groupColors, indicies, pointCloud, groupCount);
+        InstantiateMesh(groupPoints, groupColors, indicies, pParent, groupCount);
 }
 
-    private IEnumerator LoadDirectly(Vector3[] pPoints, Color[] pColors, string pName)
+    private IEnumerator Load(Vector3[] pPoints, Color[] pColors, GameObject pParent)
     {
-        GameObject pointCloud = new GameObject(pName);
-
         int pointCount = pPoints.Length;
         int groupCount = pointCount / meshPointLimit;       //zero indexed
 
@@ -222,7 +215,7 @@ public class PointCloudBuilder : MonoBehaviour
                 indicies[j] = j;
                 groupColors[j] = pColors[i * meshPointLimit + j];
             }
-            InstantiateMesh(groupPoints, groupColors, indicies, pointCloud, i);
+            InstantiateMesh(groupPoints, groupColors, indicies, pParent, i);
 
             guiText = i.ToString() + " out of " + groupCount.ToString() + " PointGroups loaded";
             yield return null;
@@ -239,7 +232,7 @@ public class PointCloudBuilder : MonoBehaviour
             groupColors[j] = pColors[groupCount * meshPointLimit + j];
         }
 
-        InstantiateMesh(groupPoints, groupColors, indicies, pointCloud, groupCount);
+        InstantiateMesh(groupPoints, groupColors, indicies, pParent, groupCount);
     }
 
     #endregion IEnumerators
