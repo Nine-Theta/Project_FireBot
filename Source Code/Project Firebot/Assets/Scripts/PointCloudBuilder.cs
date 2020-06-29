@@ -11,28 +11,31 @@ public class PointCloudBuilder : MonoBehaviour
 
     [SerializeField] private int meshPointLimit = 65535;
 
+    [SerializeField] private bool enableLargeMeshSize = false;
+    [SerializeField] private Color defaultColor = Color.green;
+    private const float colDiv = 0.00392156862745098f; // 1/255
+
     //GUI
     private float progress = 0;
     private string guiText = "";
     private bool loaded = false;
-    
-    [SerializeField] private Color defaultColor = Color.green;
-    private const float colDiv = 0.00392156862745098f; // 1/255
-
-    private void Start()
-    {
-        //LoadOFF(filePath + ".off");
-    }
 
     /// <summary>
     /// Decides how many points are allowed in a single group(mesh), before a new one is made.
     /// Lower values provide smoother loading, but decrease overall performance.
-    /// At the time of writing Unity has an internal limit of 65535 vertices (uint16), afterwhich it will no longer display additional points.
+    /// Unity has a standard internal limit of 65535 vertices (uint16) per mesh, afterwhich it will no longer display additional points.
+    /// Enabling large mesh size will increase this limit to 4,294,967,295 (uint32), however GPU support for this in not guaranteed on all platforms.
     /// </summary>
     public int MeshPointLimit
     {
         get { return meshPointLimit; }
         set { meshPointLimit = value; }
+    }
+
+    public bool EnableLargeMeshSize
+    {
+        get { return enableLargeMeshSize; }
+        set { enableLargeMeshSize = value; }
     }
 
     public Color DefaultColor
@@ -254,6 +257,8 @@ public class PointCloudBuilder : MonoBehaviour
     {
         Debug.Log("creating mesh...");
         Mesh mesh = new Mesh();
+
+        if (enableLargeMeshSize) { mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32; }
 
         int pointCount = pPoints.Length;
 
