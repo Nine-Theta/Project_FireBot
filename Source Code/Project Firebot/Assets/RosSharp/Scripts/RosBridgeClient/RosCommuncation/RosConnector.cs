@@ -19,6 +19,7 @@ using System;
 using System.Threading;
 using RosSharp.RosBridgeClient.Protocols;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace RosSharp.RosBridgeClient
 {
@@ -30,6 +31,7 @@ namespace RosSharp.RosBridgeClient
         public RosSocket.SerializerEnum Serializer;
         public Protocol protocol;
         public string RosBridgeServerUrl = "ws://192.168.0.1:9090";
+        public Text ConsoleLog;
 
         public ManualResetEvent IsConnected { get; private set; }
 
@@ -41,10 +43,14 @@ namespace RosSharp.RosBridgeClient
 
         protected void ConnectAndWait()
         {
+            ConsolePrint("Trying to connect to: " + RosBridgeServerUrl);
             RosSocket = ConnectToRos(protocol, RosBridgeServerUrl, OnConnected, OnClosed, Serializer);
 
             if (!IsConnected.WaitOne(SecondsTimeout * 1000))
+            {
                 Debug.LogWarning("Failed to connect to RosBridge at: " + RosBridgeServerUrl);
+                ConsolePrint("Failed to connect to RosBridge at: " + RosBridgeServerUrl);
+            }
         }
 
         public static RosSocket ConnectToRos(Protocol protocolType, string serverUrl, EventHandler onConnected = null, EventHandler onClosed = null, RosSocket.SerializerEnum serializer = RosSocket.SerializerEnum.Microsoft)
@@ -65,12 +71,19 @@ namespace RosSharp.RosBridgeClient
         {
             IsConnected.Set();
             Debug.Log("Connected to RosBridge: " + RosBridgeServerUrl);
+            ConsolePrint("Connected to RosBridge: " + RosBridgeServerUrl);
         }
 
         private void OnClosed(object sender, EventArgs e)
         {
             IsConnected.Reset();
             Debug.Log("Disconnected from RosBridge: " + RosBridgeServerUrl);
+            ConsolePrint("Disconnected from RosBridge: " + RosBridgeServerUrl);
+        }
+
+        public void ConsolePrint(string message)
+        {
+            ConsoleLog.text = message;
         }
     }
 }

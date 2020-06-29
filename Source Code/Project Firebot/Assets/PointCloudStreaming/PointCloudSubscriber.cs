@@ -28,7 +28,6 @@ namespace RosSharp.RosBridgeClient
         protected override void Start()
         {
             base.Start();
-
         }
 
         public void Update()
@@ -45,7 +44,7 @@ namespace RosSharp.RosBridgeClient
 
         protected override void ReceiveMessage(PointCloud2 message)
         {
-
+            gameObject.GetComponent<RosConnector>().ConsolePrint("ReceiveMessage ----- Si");
 
             size = message.data.GetLength(0);
 
