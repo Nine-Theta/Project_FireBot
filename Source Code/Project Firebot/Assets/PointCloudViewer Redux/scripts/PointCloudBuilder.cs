@@ -103,7 +103,7 @@ public class PointCloudBuilder : MonoBehaviour
                     }
             InstantiateMesh(groupPoints, groupColors, indicies, pParent, i);
 
-            guiText = i.ToString() + " out of " + groupCount.ToString() + " PointGroups loaded";
+            guiText = i.ToString() + " out of " + (groupCount - 1).ToString() + " PointGroups loaded";
             yield return null;
         }
 
@@ -142,7 +142,7 @@ public class PointCloudBuilder : MonoBehaviour
             }
             InstantiateMesh(groupPoints, groupColors, indicies, pParent, i);
 
-            guiText = i.ToString() + " out of " + groupCount.ToString() + " PointGroups loaded";
+            guiText = i.ToString() + " out of " + (groupCount -1).ToString() + " PointGroups loaded";
             yield return null;
         }
 
@@ -220,7 +220,7 @@ public class PointCloudBuilder : MonoBehaviour
             }
             InstantiateMesh(groupPoints, groupColors, indicies, pParent, i);
 
-            guiText = i.ToString() + " out of " + groupCount.ToString() + " PointGroups loaded";
+            guiText = i.ToString() + " out of " + (groupCount - 1).ToString() + " PointGroups loaded";
             yield return null;
         }
 
@@ -251,7 +251,6 @@ public class PointCloudBuilder : MonoBehaviour
         pointGroup.GetComponent<MeshFilter>().mesh = CreateMesh(pPoints, pColors, pIndicies);
         pointGroup.transform.parent = pParent.transform;
     }
-
 
     private Mesh CreateMesh(Vector3[] pPoints, Color[] pColors, int[] pIndicies)
     {

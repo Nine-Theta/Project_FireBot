@@ -1,21 +1,27 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Xml;
 using UnityEngine;
+using UnityEditor;
 
-[RequireComponent(typeof(PointCloudBuilder))]
+//[RequireComponent(typeof(PointCloudBuilder))]
+[System.Serializable]
 public class PointCloudManagerRedux : MonoBehaviour
 {
-    /*File*/    [Header("File")]
-    public string filePath = "/PointCloud/xyzrgb_manuscript"; // "\PointCloud\xyzrgb_manuscript" <- test pointcloud
-    private string filename;
+    /*File*/
+    [Header("File")]
+    [SerializeField] private TextAsset file = null;  // "\PointCloud\xyzrgb_manuscript" <- test pointcloud
+    private enum supportedFileTypes { OFF, PTS, XYZ }
+    [SerializeField] private supportedFileTypes fileType = supportedFileTypes.OFF;
 
     //GUI
     private float progress = 0;
     private string guiText = "";
     private bool loaded = false;
 
-    /*PointCloud*/  [Header("PointCloud")]
+    /*PointCloud*/
+    [Header("PointCloud")]
     private GameObject pointCloud;
 
     public float scale = 1;
@@ -33,10 +39,7 @@ public class PointCloudManagerRedux : MonoBehaviour
 
     private void Start()
     {
-        //Debug.Log(20*1.0f / (501 - 1));//Application.streamingAssetsPath);
         CreateFolders();
-
-        filename = Path.GetFileName(filePath);
 
         builder = GetComponent<PointCloudBuilder>();
 
@@ -45,61 +48,55 @@ public class PointCloudManagerRedux : MonoBehaviour
 
     private void LoadScene()
     {
-        if(!Directory.Exists(Application.dataPath + "/Resources/PointCloudMeshes" + filename))
-        {
-            UnityEditor.AssetDatabase.CreateFolder("Assets/Resources/PointCloudMeshes", filename);
-            LoadPointCloud();
-        }
-        else if (forceReload)
-        {
-            UnityEditor.FileUtil.DeleteFileOrDirectory(Application.dataPath + "/Resources/PointCloudMeshes" + filename);
-            UnityEditor.AssetDatabase.Refresh();
-            UnityEditor.AssetDatabase.CreateFolder("Assets/Resources/PointCloudMeshes", filename);
-            LoadPointCloud();
-        }
-        else
-        {
-            LoadStoredMeshes();
-        }
+        if (file == null) { Debug.LogWarning("pointCloud file is null"); return; }
+
+        LoadPointCloud();
+
+        //LoadStoredMeshes();
     }
 
     private void LoadPointCloud()
     {
-        if (File.Exists(Application.dataPath + filePath + ".off"))
-            StartCoroutine("LoadOFF", filePath + ".off");
-       /*else if (File.Exists(Application.dataPath + filePath + ".pts"))
-            // load pts
-            StartCoroutine("loadPTS", filePath + ".pts");
-        else if (File.Exists(Application.dataPath + filePath + ".xyz"))
-            // load xyz
-            StartCoroutine("loadXYZ", filePath + ".xyz");*/
-        else
-            Debug.LogWarning("File '" +filePath+ "' could not be found");
+        switch (fileType)
+        {
+            case supportedFileTypes.OFF:
+                StartCoroutine(LoadOFF(file));
+                break;
+            case supportedFileTypes.PTS:
+                StartCoroutine(LoadPTS(file));
+                break;
+            case supportedFileTypes.XYZ:
+                StartCoroutine(LoadXYZ(file));
+                break;
+            default:
+                Debug.LogWarning("Unsupported file format selected, somehow");
+                break;
+        }
     }
 
     private void LoadStoredMeshes()
     {
-        Debug.Log("Using previously loaded PointCloud: " + filename);
+        Debug.Log("Using previously loaded PointCloud: " + file.name);
 
-        Instantiate(Resources.Load("PointCloudMeshes/" + filename));
+        Instantiate(Resources.Load("PointCloudMeshes/" + file.name));
 
         loaded = true;
     }
 
-    private IEnumerator LoadOFF(string pFilePath)
+    private IEnumerator LoadOFF(TextAsset pFile)
     {
         Debug.Log("loading OFF");
-        StreamReader reader = new StreamReader(Application.dataPath + pFilePath);
-        reader.ReadLine(); // Object File Format
-        string[] buffer = reader.ReadLine().Split(); //  number of points, number of faces, number of edges
 
+        string[] lines = pFile.text.Split('\n');
+        string[] buffer = lines[1].Split(); //number of points is stored at the secondline, first line is Object File Format identifier
+        
         int totalPoints = int.Parse(buffer[0]);
         points = new Vector3[totalPoints];
         colors = new Color[totalPoints];
 
-        for (int i = 0; i<totalPoints; i++)
+        for (int i = 0; i < totalPoints; i++)
         {
-            buffer = reader.ReadLine().Split();
+            buffer = lines[i + 2].Split();
 
             if (!invertYZ)
                 points[i] = new Vector3(float.Parse(buffer[0]) * scale, float.Parse(buffer[1]) * scale, float.Parse(buffer[2]) * scale);
@@ -113,37 +110,39 @@ public class PointCloudManagerRedux : MonoBehaviour
 
             //GUI
             progress = (float)i / (totalPoints - 1);
-            if(i%(totalPoints*0.05f) == 0)
+            if (i % (totalPoints * 0.05f) == 0)
             {
-                guiText = i.ToString() +" out of " + totalPoints.ToString() + " loaded";
+                guiText = i.ToString() + " out of " + totalPoints.ToString() + " loaded";
                 yield return null;
             }
         }
 
-        builder.LoadPointGroup(points, colors, filename);
+        pointCloud = new GameObject(pFile.name);
 
+        builder.LoadPoints(points, colors, pointCloud);
+        
+        #if UNITY_EDITOR
         //Store PointCloud
-        //UnityEditor.PrefabUtility.CreatePrefab("Assets/Resources/PointCloudMeshes/" + filename + ".prefab", pointCloud);
+        UnityEditor.PrefabUtility.SaveAsPrefabAsset(pointCloud, "Assets/Resources/PointCloudMeshes/" + pFile.name + ".prefab");
+        #endif
 
         loaded = true;
     }
 
-    private IEnumerator loadPTS(string dPath)
+    private IEnumerator LoadPTS(TextAsset pFile)
     {
-
         Debug.Log("loading PTS");
-        // Read file
-        StreamReader sr = new StreamReader(Application.dataPath + dPath);
-        string[] buffer = sr.ReadLine().Split(); // nPoints
+
+        string[] lines = pFile.text.Split('\n');
+        string[] buffer = lines[0].Split(); //number of points
 
         int totalPoints = int.Parse(buffer[0]);
         points = new Vector3[totalPoints];
         colors = new Color[totalPoints];
-        minValue = new Vector3();
 
         for (int i = 0; i < totalPoints; i++)
         {
-            buffer = sr.ReadLine().Split();
+            buffer = lines[i + 1].Split();
 
             if (!invertYZ)
                 points[i] = new Vector3(float.Parse(buffer[0]) * scale, float.Parse(buffer[1]) * scale, float.Parse(buffer[2]) * scale);
@@ -155,11 +154,8 @@ public class PointCloudManagerRedux : MonoBehaviour
             else
                 colors[i] = defaultColor;
 
-            // Relocate Points near the origin
-            //calculateMin(points[i]);
-
             // GUI
-            progress = i * 1.0f / (totalPoints- 1) * 1.0f;
+            progress = i * 1.0f / (totalPoints - 1) * 1.0f;
             if (i % Mathf.FloorToInt(totalPoints * 0.05f) == 0)
             {
                 guiText = i.ToString() + " out of " + totalPoints.ToString() + " loaded";
@@ -169,29 +165,28 @@ public class PointCloudManagerRedux : MonoBehaviour
 
 
         // Instantiate Point Groups
-        builder.LoadPointGroup(points, colors, filename);
+        builder.LoadPoints(points, colors, pointCloud);
 
+#if UNITY_EDITOR
         //Store PointCloud
-        //UnityEditor.PrefabUtility.CreatePrefab("Assets/Resources/PointCloudMeshes/" + filename + ".prefab", pointCloud);
+        UnityEditor.PrefabUtility.SaveAsPrefabAsset(pointCloud, "Assets/Resources/PointCloudMeshes/" + pFile.name + ".prefab");
+#endif
 
         loaded = true;
     }
 
-    private IEnumerator loadXYZ(string dPath)
+    private IEnumerator LoadXYZ(TextAsset pFile)
     {
+        string[] lines = pFile.text.Split('\n');
+        string[] buffer;
 
-        // Read file
-        StreamReader sr = new StreamReader(Application.dataPath + dPath);
-        string[] buffer = new string[8];
-
-        int totalPoints= 56000000;
+        int totalPoints = lines.Length;
         points = new Vector3[totalPoints];
         colors = new Color[totalPoints];
-        minValue = new Vector3();
 
         for (int i = 0; i < totalPoints; i++)
         {
-            buffer = sr.ReadLine().Split();
+            buffer = lines[i].Split();
 
             if (!invertYZ)
                 points[i] = new Vector3(float.Parse(buffer[2]) * scale, float.Parse(buffer[3]) * scale, float.Parse(buffer[4]) * scale);
@@ -203,46 +198,34 @@ public class PointCloudManagerRedux : MonoBehaviour
             else
                 colors[i] = Color.cyan;
 
-            // Relocate Points near the origin
-            //calculateMin(points[i]);
-
             // GUI
-            progress = i * 1.0f / (totalPoints- 1) * 1.0f;
-            if (i % Mathf.FloorToInt(totalPoints/ 20) == 0)
+            progress = i * 1.0f / (totalPoints - 1) * 1.0f;
+            if (i % Mathf.FloorToInt(totalPoints / 20) == 0)
             {
                 guiText = i.ToString() + " out of " + totalPoints.ToString() + " loaded";
                 yield return null;
             }
         }
 
-        builder.LoadPointGroup(points, colors, filename);
+        builder.LoadPoints(points, colors, pointCloud);
 
+#if UNITY_EDITOR
         //Store PointCloud
-        //UnityEditor.PrefabUtility.CreatePrefab("Assets/Resources/PointCloudMeshes/" + filename + ".prefab", pointCloud);
+        UnityEditor.PrefabUtility.SaveAsPrefabAsset(pointCloud, "Assets/Resources/PointCloudMeshes/" + pFile.name + ".prefab");
+#endif
 
         loaded = true;
-    }
-    
-    private void CalculateMin(Vector3 pPoint)
-    {
-        if (minValue.magnitude == 0)
-            minValue = pPoint;
-
-        if (pPoint.x < minValue.x)
-            minValue.x = pPoint.x;
-        if (pPoint.y < minValue.y)
-            minValue.y = pPoint.y;
-        if (pPoint.z < minValue.z)
-            minValue.z = pPoint.z;
     }
 
     private void CreateFolders()
     {
+#if UNITY_EDITOR
         if (!Directory.Exists(Application.dataPath + "/Resources/"))
             UnityEditor.AssetDatabase.CreateFolder("Assets", "Resources");
 
         if (!Directory.Exists(Application.dataPath + "/Resources/"))
             UnityEditor.AssetDatabase.CreateFolder("Assets/Resources", "PointCloudMeshes");
+#endif
     }
 
     private void OnGUI()
