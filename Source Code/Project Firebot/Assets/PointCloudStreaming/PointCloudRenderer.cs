@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using RosSharp.RosBridgeClient;
+using UnityEngine.UI;
 
 public class PointCloudRenderer : MonoBehaviour
 {
@@ -34,7 +35,7 @@ public class PointCloudRenderer : MonoBehaviour
         mesh = new Mesh
         {
             // Use 32 bit integer values for the mesh, allows for stupid amount of vertices (2,147,483,647 I think?)
-            indexFormat = UnityEngine.Rendering.IndexFormat.UInt32
+            indexFormat = UnityEngine.Rendering.IndexFormat.UInt16
         };
 
         transform.position = offset.position;
@@ -43,8 +44,6 @@ public class PointCloudRenderer : MonoBehaviour
 
     void UpdateMesh()
     {
-        
-        
         //positions = subscriber.pcl;
         positions = subscriber.GetPCL();
         colours = subscriber.GetPCLColor();

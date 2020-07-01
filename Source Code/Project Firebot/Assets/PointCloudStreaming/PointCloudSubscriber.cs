@@ -44,8 +44,6 @@ namespace RosSharp.RosBridgeClient
 
         protected override void ReceiveMessage(PointCloud2 message)
         {
-            gameObject.GetComponent<RosConnector>().ConsolePrint("ReceiveMessage ----- Si");
-
             size = message.data.GetLength(0);
 
             byteArray = new byte[size];
@@ -61,7 +59,7 @@ namespace RosSharp.RosBridgeClient
             isMessageReceived = true;
         }
 
-        //点群の座標を変換
+        //Convert point cloud coordinates
         void PointCloudRendering()
         {
             pcl = new Vector3[size];
@@ -82,7 +80,7 @@ namespace RosSharp.RosBridgeClient
             float g;
             float b;
 
-            //この部分でbyte型をfloatに変換         
+            //Convert byte type to float in this part         
             for (int n = 0; n < size; n++)
             {
                 x_posi = n * point_step + 0;
@@ -106,8 +104,6 @@ namespace RosSharp.RosBridgeClient
 
                 pcl[n] = new Vector3(x, z, y);
                 pcl_color[n] = new Color(r, g, b);
-
-
             }
         }
 
