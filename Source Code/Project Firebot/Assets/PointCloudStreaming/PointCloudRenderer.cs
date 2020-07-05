@@ -24,18 +24,18 @@ public class PointCloudRenderer : MonoBehaviour
     private Color[] colours = new Color[] { new Color(1f, 0f, 0f), new Color(0f, 1f, 0f) };
 
 
-    public Transform offset; // Put any gameobject that faciliatates adjusting the origin of the pointcloud in VR. 
+    public Transform offset; // Put any gameobject that faciliatates adjusting the origin of the pointcloud in VR.
 
     void Start()
     {
         // Give all the required components to the gameObject
-        meshRenderer = gameObject.AddComponent<MeshRenderer>();
-        mf = gameObject.AddComponent<MeshFilter>();
-        meshRenderer.material = new Material(Shader.Find("Custom/PointCloudShader"));
+        meshRenderer = gameObject.GetComponent<MeshRenderer>();
+        mf = gameObject.GetComponent<MeshFilter>();
+        //meshRenderer.material = new Material(Shader.Find("Custom/PointCloudShader"));
         mesh = new Mesh
         {
             // Use 32 bit integer values for the mesh, allows for stupid amount of vertices (2,147,483,647 I think?)
-            indexFormat = UnityEngine.Rendering.IndexFormat.UInt16
+            indexFormat = UnityEngine.Rendering.IndexFormat.UInt32
         };
 
         transform.position = offset.position;

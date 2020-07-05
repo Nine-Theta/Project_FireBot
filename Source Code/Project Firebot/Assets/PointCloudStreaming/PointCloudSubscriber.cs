@@ -3,14 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using RosSharp.RosBridgeClient.MessageTypes.Sensor;
 using UnityEngine;
-using UnityEngine.UI;
 using System.Threading;
 
 
 namespace RosSharp.RosBridgeClient
 {
     [RequireComponent(typeof(RosConnector))]
-    public class PointCloudSubscriber : UnitySubscriber<MessageTypes.Sensor.PointCloud2>
+    public class PointCloudSubscriber : UnitySubscriber<PointCloud2>
     {
         private byte[] byteArray;
         private bool isMessageReceived = false;
@@ -25,6 +24,9 @@ namespace RosSharp.RosBridgeClient
         int row_step;
         int point_step;
 
+        int counter = 0;
+        private string text;
+
         protected override void Start()
         {
             base.Start();
@@ -32,23 +34,26 @@ namespace RosSharp.RosBridgeClient
 
         public void Update()
         {
-
             if (isMessageReceived)
             {
+                UIConsole.Instance.SetMessage(text);
                 PointCloudRendering();
                 isMessageReceived = false;
             }
-
-
         }
 
         protected override void ReceiveMessage(PointCloud2 message)
         {
-            size = message.data.GetLength(0);
+            counter++;
+
+            //size = message.data.GetLength(0);
+            size = message.data.Length;
+
+            Debug.Log("ReceiveMessage: " + "size: " + size + " count: " + counter);
+            text = "ReceiveMessage: " + "size: " + size + " count: " + counter;
 
             byteArray = new byte[size];
             byteArray = message.data;
-
 
             width = (int)message.width;
             height = (int)message.height;
@@ -56,6 +61,7 @@ namespace RosSharp.RosBridgeClient
             point_step = (int)message.point_step;
 
             size = size / point_step;
+            
             isMessageReceived = true;
         }
 
