@@ -46,8 +46,7 @@ namespace RosSharp.RosBridgeClient
         {
             counter++;
 
-            //size = message.data.GetLength(0);
-            size = message.data.Length;
+            size = message.data.GetLength(0);
 
             Debug.Log("ReceiveMessage: " + "size: " + size + " count: " + counter);
             text = "ReceiveMessage: " + "size: " + size + " count: " + counter;
