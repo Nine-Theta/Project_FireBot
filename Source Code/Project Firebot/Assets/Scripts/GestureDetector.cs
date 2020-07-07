@@ -104,7 +104,7 @@ public class GestureDetector : MonoBehaviour
                 sumDistance += distance;
             }
 
-            if(!isDiscarded && sumDistance < currentMin)
+            if(fingerBones.Count > 0 && !isDiscarded && sumDistance < currentMin)
             {
                 currentMin = sumDistance;
                 currentGesture = gesture;
