@@ -951,8 +951,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 861641290}
-  - component: {fileID: 861641289}
   - component: {fileID: 861641291}
+  - component: {fileID: 861641289}
   m_Layer: 0
   m_Name: Point Loader
   m_TagString: Untagged
@@ -969,7 +969,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 861641288}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0fff077a207745a418ca2980905c1458, type: 3}
+  m_Script: {fileID: 11500000, guid: ad0e591bcf7ac8249a0e0a5cbd5a29d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Point: {fileID: -927199367670048503, guid: cb088a42b947679489a62c0068ad5ea8, type: 3}

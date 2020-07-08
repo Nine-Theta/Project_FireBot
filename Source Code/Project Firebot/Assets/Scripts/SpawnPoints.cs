@@ -16,7 +16,7 @@ public class SpawnPoints : MonoBehaviour
         {
             Vector3 pos = new Vector3(Random.Range(Range.x, Range.y), Random.Range(Range.x, Range.y), Random.Range(Range.x, Range.y) * 3) + transform.position;
             GameObject p = Instantiate(Point, pos, Quaternion.Euler(Random.Range(0f,360f), Random.Range(0f, 360f), Random.Range(0f, 360f)), transform);
-            
+
             //p.transform.LookAt(new Vector3(0, 0, 30), Vector3.up);
             //BoxCollider collider = p.AddComponent<BoxCollider>();
             //p.GetComponent<BoxCollider>().isTrigger = true;

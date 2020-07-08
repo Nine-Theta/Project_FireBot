@@ -18,15 +18,15 @@ public class DistanceOptimization : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.E))
         {
-            SeparatePoints();
+            Debug.Log("Run optimization");
             CullPoints();
         }
     }
 
     //Iterates through all points, calculaates the number of points in each group and then deletes some points in each group
-    void SeparatePoints()
+    void CullPoints()
     {
         for (int i = 0; i < transform.childCount; i++)
         {
@@ -58,8 +58,4 @@ public class DistanceOptimization : MonoBehaviour
         }
     }
 
-    void CullPoints()
-    {
-
-    }
 }
