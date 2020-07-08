@@ -28,8 +28,10 @@ namespace RosSharp.RosBridgeClient
 
         public RosSocket RosSocket { get; private set; }
         public RosSocket.SerializerEnum Serializer;
-        public Protocol protocol;
-        public string RosBridgeServerUrl = "ws://192.168.0.1:9090";
+        public Protocol protocol;                                
+        public string RosBridgeServerUrl = "ws://192.168.0.1:9090"; //145.76.27.43:9090
+        private string text = "";
+        private string previousText = "";
 
         public ManualResetEvent IsConnected { get; private set; }
 
@@ -39,12 +41,25 @@ namespace RosSharp.RosBridgeClient
             new Thread(ConnectAndWait).Start();
         }
 
+        private void Update()
+        {
+            if (text != previousText) {
+                UIConsole.Instance.SetMessage(text);
+                previousText = text;
+            }
+        }
+
         protected void ConnectAndWait()
         {
+            text = "Trying to connect to: " + RosBridgeServerUrl;
+            Debug.Log("Trying to connect to: " + RosBridgeServerUrl);
             RosSocket = ConnectToRos(protocol, RosBridgeServerUrl, OnConnected, OnClosed, Serializer);
 
             if (!IsConnected.WaitOne(SecondsTimeout * 1000))
+            {
+                text = "Failed to connect to RosBridge at: " + RosBridgeServerUrl;
                 Debug.LogWarning("Failed to connect to RosBridge at: " + RosBridgeServerUrl);
+            }
         }
 
         public static RosSocket ConnectToRos(Protocol protocolType, string serverUrl, EventHandler onConnected = null, EventHandler onClosed = null, RosSocket.SerializerEnum serializer = RosSocket.SerializerEnum.Microsoft)
@@ -64,12 +79,15 @@ namespace RosSharp.RosBridgeClient
         private void OnConnected(object sender, EventArgs e)
         {
             IsConnected.Set();
+            text = "Connected to RosBridge: " + RosBridgeServerUrl;
             Debug.Log("Connected to RosBridge: " + RosBridgeServerUrl);
+            
         }
 
         private void OnClosed(object sender, EventArgs e)
         {
             IsConnected.Reset();
+            text = "Disconnected from RosBridge: " + RosBridgeServerUrl;
             Debug.Log("Disconnected from RosBridge: " + RosBridgeServerUrl);
         }
     }
