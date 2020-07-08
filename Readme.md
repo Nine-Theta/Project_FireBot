@@ -1,4 +1,4 @@
-AMI research project - Firebot Telepresence
+AMI research project - Firebot Telepresence (Real-time point cloud construction and information system)
 ===========================================================
 
 * **Researcher/s**: 
@@ -10,7 +10,7 @@ AMI research project - Firebot Telepresence
 
 * **Type of research**: Smart Solutions Semester/Minor Immersive Media
 * **Duration**: 1 Semester or 20 weeks
-* **Related project**: Telepresence in VR (Firebot)
+* **Related project**: Firebot
 
 
 Repository information
@@ -31,15 +31,20 @@ GitHub-Repository
     └───Presentation
     └───Publications
     └───Report
+    └───Factsheet
+    └───Poster
 ```
 
 Research project checklist
 ---------------------------
 Please mark the items that have been completed:
-- [x] Get a Github repository
-- [x] Complete the repository Readme.md file with your research information.
+- [x]    Get a Github repository
+- [x]    Complete the repository Readme.md file with your research information.
 
 Deliverables:
-- [ ] Project Report
-- [ ] Presentation
-- [ ] Video
+- [X]   Project Report 
+- [X]    Presentation 
+- [X]    Factsheet
+- [X]    Poster
+- [X]    Source Code
+- [ ]    Video
