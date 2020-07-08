@@ -235,15 +235,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c9d24ea1016a324a91ce1e9a0847f00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mode: 0
-  filePath: \PointCloud\xyzrgb_manuscript
-  vertexMaterial: {fileID: 2100000, guid: 693c4196156fb53418bede00328961a6, type: 2}
+  file: {fileID: 2811297602134710623, guid: 456ad5b5e9dfba24bbdbb3a429ab6232, type: 3}
+  fileType: 0
   scale: 1
   invertYZ: 0
-  forceReload: 1
-  totalPoints: 0
-  pointGroups: 0
-  groupPointLimit: 65535
 --- !u!114 &682266235
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -289,11 +284,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7bbff3008ccaf8447ae72e3081404492, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  filePath: \PointCloud\xyzrgb_manuscript
   vertexMaterial: {fileID: 2100000, guid: 693c4196156fb53418bede00328961a6, type: 2}
   meshPointLimit: 65535
-  scale: 1
-  invertYZ: 0
+  enableLargeMeshSize: 0
   defaultColor: {r: 0, g: 1, b: 0, a: 1}
 --- !u!1 &899075113
 GameObject:

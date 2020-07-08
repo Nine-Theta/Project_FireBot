@@ -242,7 +242,6 @@ public class PointCloudBuilder : MonoBehaviour
 
     private void InstantiateMesh(Vector3[] pPoints, Color[] pColors, int[] pIndicies, GameObject pParent, int pMeshIndex = 0)
     {
-        Debug.Log("instatiating...");
         GameObject pointGroup = new GameObject("PointGroup"+pMeshIndex+" ("+pPoints.Length+")");
         pointGroup.AddComponent<MeshFilter>();
         pointGroup.AddComponent<MeshRenderer>();
@@ -254,10 +253,9 @@ public class PointCloudBuilder : MonoBehaviour
 
     private Mesh CreateMesh(Vector3[] pPoints, Color[] pColors, int[] pIndicies)
     {
-        Debug.Log("creating mesh...");
         Mesh mesh = new Mesh();
 
-        if (enableLargeMeshSize) { mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32; }
+        if (enableLargeMeshSize) { mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32; } //Is set to UInt16 by default
 
         int pointCount = pPoints.Length;
 
@@ -267,8 +265,6 @@ public class PointCloudBuilder : MonoBehaviour
         mesh.SetIndices(pIndicies, MeshTopology.Points, 0);
         mesh.uv = new Vector2[pointCount];
         mesh.normals = new Vector3[pointCount];
-
-        Debug.Log("mesh done...");
 
         return mesh;
     }
