@@ -1,18 +1,15 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Xml;
 using UnityEngine;
 using UnityEditor;
 
-//[RequireComponent(typeof(PointCloudBuilder))]
-[System.Serializable]
+[RequireComponent(typeof(PointCloudBuilder))]
 public class PointCloudManagerRedux : MonoBehaviour
 {
     /*File*/
-    [Header("File")]
-    [SerializeField] private TextAsset file = null;  // "\PointCloud\xyzrgb_manuscript" <- test pointcloud
-    private enum supportedFileTypes { OFF, PTS, XYZ }
+    [SerializeField] private TextAsset file = null;     // "\PointCloud\xyzrgb_manuscript" <- test pointcloud
+    private enum supportedFileTypes { OFF, PTS, XYZ }   // more types have to added manually
     [SerializeField] private supportedFileTypes fileType = supportedFileTypes.OFF;
 
     //GUI
@@ -21,27 +18,22 @@ public class PointCloudManagerRedux : MonoBehaviour
     private bool loaded = false;
 
     /*PointCloud*/
-    [Header("PointCloud")]
     private GameObject pointCloud;
-
     public float scale = 1;
     public bool invertYZ = false;
-    public bool forceReload = false;
-
-    private Vector3[] points;
-    private Color[] colors;
-    private Vector3 minValue;
-
-    private Color defaultColor = Color.green;
-    private const float colDiv = 0.00392156862745098f; // 1/255
+    //public bool forceReload = false;  //for use with loadStoredMeshes()
+    
+    private Color defaultColor;
+    private const float colDiv = 0.00392156862745098f; // 1/255 but more efficient
 
     private PointCloudBuilder builder;
 
     private void Start()
     {
-        CreateFolders();
+        //CreateFolders(); // not used in this version
 
         builder = GetComponent<PointCloudBuilder>();
+        defaultColor = builder.DefaultColor;
 
         LoadScene();
     }
@@ -52,7 +44,7 @@ public class PointCloudManagerRedux : MonoBehaviour
 
         LoadPointCloud();
 
-        //LoadStoredMeshes();
+        //LoadStoredMeshes(); //disabled for now, doesn't work properly atm
     }
 
     private void LoadPointCloud()
@@ -91,8 +83,8 @@ public class PointCloudManagerRedux : MonoBehaviour
         string[] buffer = lines[1].Split(); //number of points is stored at the secondline, first line is Object File Format identifier
         
         int totalPoints = int.Parse(buffer[0]);
-        points = new Vector3[totalPoints];
-        colors = new Color[totalPoints];
+        Vector3[] points = new Vector3[totalPoints];
+        Color[] colors = new Color[totalPoints];
 
         for (int i = 0; i < totalPoints; i++)
         {
@@ -103,7 +95,7 @@ public class PointCloudManagerRedux : MonoBehaviour
             else
                 points[i] = new Vector3(float.Parse(buffer[0]) * scale, float.Parse(buffer[2]) * scale, float.Parse(buffer[1]) * scale);
 
-            if (buffer.Length > 5)
+            if (buffer.Length > 5) //OFF uses RGBA
                 colors[i] = new Color(float.Parse(buffer[3]) * colDiv, float.Parse(buffer[4]) * colDiv, float.Parse(buffer[5]) * colDiv);
             else
                 colors[i] = defaultColor;
@@ -123,7 +115,7 @@ public class PointCloudManagerRedux : MonoBehaviour
         
         #if UNITY_EDITOR
         //Store PointCloud
-        UnityEditor.PrefabUtility.SaveAsPrefabAsset(pointCloud, "Assets/Resources/PointCloudMeshes/" + pFile.name + ".prefab");
+        //UnityEditor.PrefabUtility.SaveAsPrefabAsset(pointCloud, "Assets/Resources/PointCloudMeshes/" + pFile.name + ".prefab");
         #endif
 
         loaded = true;
@@ -134,11 +126,11 @@ public class PointCloudManagerRedux : MonoBehaviour
         Debug.Log("loading PTS");
 
         string[] lines = pFile.text.Split('\n');
-        string[] buffer = lines[0].Split(); //number of points
+        string[] buffer = lines[0].Split(); //number of points stored at first line
 
         int totalPoints = int.Parse(buffer[0]);
-        points = new Vector3[totalPoints];
-        colors = new Color[totalPoints];
+        Vector3[] points = new Vector3[totalPoints];
+        Color[] colors = new Color[totalPoints];
 
         for (int i = 0; i < totalPoints; i++)
         {
@@ -149,27 +141,27 @@ public class PointCloudManagerRedux : MonoBehaviour
             else
                 points[i] = new Vector3(float.Parse(buffer[0]) * scale, float.Parse(buffer[2]) * scale, float.Parse(buffer[1]) * scale);
 
-            if (buffer.Length >= 6)
+            if (buffer.Length >= 6) //PTS uses ARGB
                 colors[i] = new Color(int.Parse(buffer[4]) * colDiv, int.Parse(buffer[5]) * colDiv, int.Parse(buffer[6]) * colDiv);
             else
                 colors[i] = defaultColor;
 
             // GUI
-            progress = i * 1.0f / (totalPoints - 1) * 1.0f;
-            if (i % Mathf.FloorToInt(totalPoints * 0.05f) == 0)
+            progress = (float)i / (totalPoints - 1);
+            if (i % (totalPoints * 0.05f) == 0)
             {
                 guiText = i.ToString() + " out of " + totalPoints.ToString() + " loaded";
                 yield return null;
             }
         }
 
+        pointCloud = new GameObject(pFile.name);
 
-        // Instantiate Point Groups
         builder.LoadPoints(points, colors, pointCloud);
 
 #if UNITY_EDITOR
         //Store PointCloud
-        UnityEditor.PrefabUtility.SaveAsPrefabAsset(pointCloud, "Assets/Resources/PointCloudMeshes/" + pFile.name + ".prefab");
+        //UnityEditor.PrefabUtility.SaveAsPrefabAsset(pointCloud, "Assets/Resources/PointCloudMeshes/" + pFile.name + ".prefab");
 #endif
 
         loaded = true;
@@ -177,12 +169,14 @@ public class PointCloudManagerRedux : MonoBehaviour
 
     private IEnumerator LoadXYZ(TextAsset pFile)
     {
+        Debug.Log("Loading XYZ");
+
         string[] lines = pFile.text.Split('\n');
         string[] buffer;
 
         int totalPoints = lines.Length;
-        points = new Vector3[totalPoints];
-        colors = new Color[totalPoints];
+        Vector3[] points = new Vector3[totalPoints];
+        Color[] colors = new Color[totalPoints];
 
         for (int i = 0; i < totalPoints; i++)
         {
@@ -194,24 +188,26 @@ public class PointCloudManagerRedux : MonoBehaviour
                 points[i] = new Vector3(float.Parse(buffer[2]) * scale, float.Parse(buffer[4]) * scale, float.Parse(buffer[3]) * scale);
 
             if (buffer.Length >= 5)
-                colors[i] = new Color(int.Parse(buffer[5]) / 255.0f, int.Parse(buffer[6]) / 255.0f, int.Parse(buffer[7]) / 255.0f);
+                colors[i] = new Color(int.Parse(buffer[5]) * colDiv, int.Parse(buffer[6]) * colDiv, int.Parse(buffer[7]) * colDiv);
             else
                 colors[i] = Color.cyan;
 
             // GUI
-            progress = i * 1.0f / (totalPoints - 1) * 1.0f;
-            if (i % Mathf.FloorToInt(totalPoints / 20) == 0)
+            progress = (float)i / (totalPoints - 1);
+            if (i % (totalPoints * 0.05f) == 0)
             {
                 guiText = i.ToString() + " out of " + totalPoints.ToString() + " loaded";
                 yield return null;
             }
         }
 
+        pointCloud = new GameObject(pFile.name);
+
         builder.LoadPoints(points, colors, pointCloud);
 
 #if UNITY_EDITOR
         //Store PointCloud
-        UnityEditor.PrefabUtility.SaveAsPrefabAsset(pointCloud, "Assets/Resources/PointCloudMeshes/" + pFile.name + ".prefab");
+        //UnityEditor.PrefabUtility.SaveAsPrefabAsset(pointCloud, "Assets/Resources/PointCloudMeshes/" + pFile.name + ".prefab");
 #endif
 
         loaded = true;
