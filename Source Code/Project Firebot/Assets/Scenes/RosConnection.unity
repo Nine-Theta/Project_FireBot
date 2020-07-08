@@ -502,7 +502,7 @@ MonoBehaviour:
   SecondsTimeout: 10
   Serializer: 0
   protocol: 0
-  RosBridgeServerUrl: ws://192.168.1.142:9090
+  RosBridgeServerUrl: ws://145.76.27.36:9090
 --- !u!4 &683779309
 Transform:
   m_ObjectHideFlags: 0
